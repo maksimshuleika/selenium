@@ -1,0 +1,67 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+
+describe 'Left admin menu' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+
+    # Login and password
+    @user_name = @driver.find_element(name: 'username').send_keys('admin')
+    @password = @driver.find_element(name: 'password').send_keys('admin')
+    @driver.find_element(name: 'login').click()
+
+    @driver.manage.timeouts.implicit_wait = 3
+  end
+
+  it 'links are not broken' do
+    @hrefs = []
+
+    # Checking main left menu links
+    @main_links = @driver.find_elements(css: "#box-apps-menu a")
+    @main_links.each do |link|
+      @hrefs << link.attribute("href")
+    end
+
+    @hrefs.each do |href|
+      @inner_links = []
+      @links = []
+      @driver.execute_script( "window.open()" )
+      @driver.switch_to.window( @driver.window_handles.last )
+      @driver.get(href)
+      @h1 = @driver.find_element(css: "h1")
+      if @h1.present?
+        puts "Test passed for #{href}"
+      else
+        puts "Test failed for #{href}"
+      end
+
+      # Checking inner menu links
+      @inner_links = @driver.find_elements(css: ".docs li  a")
+      @inner_links.each do |link|
+        @links << link.attribute("href")
+      end
+
+      #Checking headers h1
+      @links.each do |result|
+        @driver.execute_script( "window.open()" )
+        @driver.switch_to.window( @driver.window_handles.last )
+        @driver.get(result)
+        @inner_h1 = @driver.find_element(css: "h1")
+        if @inner_h1.present?
+          puts "Test passed for #{result}"
+        else
+          puts "Test failed for #{result}"
+        end
+        end
+        @driver.switch_to.window( @driver.window_handles.first )
+      end
+  end
+end
