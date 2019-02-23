@@ -1,0 +1,39 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'All goods on main page' do
+
+  before(:each) do
+
+      # Preparing setup for testing
+      @driver = Selenium::WebDriver.for :chrome
+      @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+      @driver.get('http://localhost:8080/litecart/en/')
+
+      @driver.manage.timeouts.implicit_wait = 3
+  end
+
+  it "have stickers" do
+      @all_products = @driver.find_elements(css: "ul.listing-wrapper.products")
+      @number_of_products = 0
+      @number_of_stickers = 0
+      @all_products_stickers = []
+
+      @all_products.each do |product|
+        @all_products_stickers << product.find_elements(css: "li")
+      end
+
+      @all_products_stickers.each do |link|
+        link.each do |sticker|
+          @sticker = sticker.find_elements(css: ".sticker")
+          if @sticker.present?
+            puts "Test passed"
+          else
+            puts "Test failed"
+          end
+        end
+      end
+    end
+  end
