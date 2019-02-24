@@ -1,0 +1,79 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'Countries and zones' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+
+    # Login and password
+    @user_name = @driver.find_element(name: 'username').send_keys('admin')
+    @password = @driver.find_element(name: 'password').send_keys('admin')
+    @driver.find_element(name: 'login').click()
+
+    @driver.manage.timeouts.implicit_wait = 3
+  end
+
+    it "are sorted correctly" do
+      @driver.find_element(css: '#box-apps-menu li:nth-child(3)').click
+      @table = []
+      @links = []
+      @names = []
+      @country_with_zones = []
+
+
+      #Checking countries
+      @wait.until { @table = @driver.find_elements(css: '.row')}
+      @table.each do |el|
+        @links << el.find_element(css: 'td a')
+        @zone = el.find_element(css: 'td:nth-child(6)')
+        if @zone.attribute("textContent") != '0'
+          @arr = el.find_element(css: 'td a')
+          @country_with_zones << @arr.attribute("href")
+        end
+      end
+
+      @links.each do |el|
+        @names << el.attribute("text")
+      end
+
+      @sorted_names = @names.sort
+
+      if @names == @sorted_names
+        puts "Test passed"
+      else
+        puts "List is not ordered alphabetically"
+      end
+
+      #Checking zones of countries
+
+      @country_with_zones.each do |link|
+        @driver.execute_script( "window.open()" )
+        @driver.switch_to.window( @driver.window_handles.last )
+        @driver.get(link)
+        @zone_table = @driver.find_elements(css: "#table-zones")
+        @td = @zone_table[0].find_elements(css: "tbody tr td:nth-child(3)")
+        @list = []
+        @td.each do |el|
+          @list << el.attribute("textContent")
+        end
+        @list.pop
+        @sort_list = @list.sort
+        if @sort_list == @list
+          puts "Order test for zones passed"
+        else
+          puts "Order test for zones didn't pass"
+        end
+        end
+    end
+end
+
+
+
+
