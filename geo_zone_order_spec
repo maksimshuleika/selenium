@@ -1,0 +1,56 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'Geo zones' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+
+    # Login and password
+    @user_name = @driver.find_element(name: 'username').send_keys('admin')
+    @password = @driver.find_element(name: 'password').send_keys('admin')
+    @driver.find_element(name: 'login').click()
+
+    @driver.manage.timeouts.implicit_wait = 3
+  end
+
+  it 'are alphabetically ordered' do
+    @hrefs = []
+
+    # Checking main left menu links
+    @main_links = @driver.find_elements(css: "#box-apps-menu a")
+    @main_links.each do |link|
+      @hrefs << link.attribute("href")
+    end
+    @hrefs.each do |el|
+      if el.include? "geo_zones"
+        @driver.get(el)
+      end
+    end
+
+    @table = []
+    @links = []
+    @names = []
+    @wait.until { @table = @driver.find_elements(css: '.row')}
+    @table.each do |el|
+      @links << el.find_element(css: 'td a')
+    end
+
+    @links.each do |el|
+      @names << el.attribute("text")
+    end
+
+    @sorted_links = @names.sort
+    if @sorted_links == @names
+      puts "Test passed for geo zone order"
+    else
+      puts "Test failed for geo zone order"
+    end
+    end
+  end
