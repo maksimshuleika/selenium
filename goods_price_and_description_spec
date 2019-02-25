@@ -1,0 +1,202 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'Campaing good:' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/en/')
+    @driver.manage.timeouts.implicit_wait = 3
+  end
+
+    it "has same name on main page and inside" do
+
+      #Getting name on main page
+      @div = @driver.find_elements(css: "#box-campaigns .content .name")
+      @div.each do |x|
+        @name = x.attribute("textContent")
+      end
+
+      #Switching inside of good
+      @a = @driver.find_elements(css: "#box-campaigns .content .link")
+      @a.each do |x|
+        @href = x.attribute("href")
+      end
+      @driver.get(@href)
+
+      #Getting inside name
+      @name_inside = @driver.find_elements(css: "#box-product h1")
+      @name_inside.each do |x|
+        @name_to_compare = x.attribute("textContent")
+      end
+      if @name == @name_to_compare
+        puts "Test passed for name comparison"
+      else
+        puts "Test failed for name comparison"
+      end
+    end
+
+    it "has the same price on main page and inside" do
+      @regular_price = @driver.find_element(css: "#box-campaigns .price-wrapper .regular-price")
+      @regular_price = @regular_price.attribute("textContent")
+
+      @campaign_price = @driver.find_element(css: "#box-campaigns .price-wrapper .campaign-price")
+      @campaign_price = @campaign_price.attribute("textContent")
+
+      @a = @driver.find_elements(css: "#box-campaigns .content .link")
+      @a.each do |x|
+        @href = x.attribute("href")
+      end
+      @driver.get(@href)
+
+      @regular_price_inside = @driver.find_element(css: ".information .price-wrapper .regular-price")
+      @regular_price_inside = @regular_price_inside.attribute("textContent")
+
+      @campaign_price_inside = @driver.find_element(css: ".information .price-wrapper .campaign-price")
+      @campaign_price_inside = @campaign_price_inside.attribute("textContent")
+
+      if @regular_price == @regular_price_inside
+        puts "Test passed for regular price comparison"
+      else
+        puts "Test didn't pass for regular price comparison"
+      end
+
+      if @campaign_price == @campaign_price_inside
+        puts "Test passed for campaign price comparison"
+      else
+        puts "Test didn't pass for campaign price comparison"
+      end
+    end
+
+    it "has grey color and crosslined on both pages" do
+       @reg_price = @driver.find_element(css: "#box-campaigns .price-wrapper .regular-price")
+       @color_of_regprice = @reg_price.style("color")
+       @text_decor_reg_price = @reg_price.style("text-decoration")
+       @color_of_regprice = @color_of_regprice.tr('^0-9', '')
+
+       @a = @driver.find_elements(css: "#box-campaigns .content .link")
+       @a.each do |x|
+         @href = x.attribute("href")
+       end
+       @driver.get(@href)
+
+       @reg_price_inside = @driver.find_element(css: ".information .price-wrapper .regular-price")
+       @color_of_regprice_inside = @reg_price_inside.style("color")
+       @text_decor_reg_price_ins = @reg_price_inside.style("text-decoration")
+       @color_of_regprice_inside = @color_of_regprice_inside.tr('^0-9', '')
+
+       @rgba_regprice = @color_of_regprice.scan(/.{3}/)
+       @rgba_regprice_inside = @color_of_regprice_inside.scan(/.{3}/)
+
+       if @rgba_regprice[0] == @rgba_regprice[1] && @rgba_regprice[1] = @rgba_regprice[2]
+         puts "Color test passed for regprice"
+       else
+         puts "Color test failed for regprice"
+       end
+
+       if @rgba_regprice_inside[0] == @rgba_regprice_inside[1] && @rgba_regprice_inside[1] == @rgba_regprice_inside[2]
+         puts "Color test passed for inner regprice"
+       else
+         puts "Color test failed for inner regprice"
+       end
+
+       if @text_decor_reg_price.include? "line-through"
+         puts "Test for crossline passed for reg price"
+       else
+         puts "Test for crossline failed for reg price"
+       end
+
+       if @text_decor_reg_price_ins.include? "line-through"
+         puts "Test for crossline passed for reg inside price"
+       else
+         puts "Test for crossline failed for reg inside price"
+       end
+    end
+
+    it "campaign price is red and in bold text" do
+      @campaign_price = @driver.find_element(css: "#box-campaigns .price-wrapper .campaign-price")
+      @campaign_price_color = @campaign_price.style("color")
+      @campaign_price_tag = @campaign_price.attribute("tagName")
+
+      @campaign_price_color = @campaign_price_color.tr('^0-9', '')
+      @rgba_camp_price = @campaign_price_color.scan(/.{3}/)
+
+      #Checking red color
+      if @rgba_camp_price[0] != @rgba_camp_price[1]
+        puts "Test passed for campaign color"
+      else
+        puts "Test failed for campaign color"
+      end
+
+      if @campaign_price_tag.casecmp 'strong'
+        puts "Test passed for strong tag for campaign price"
+      else
+        puts "Test passed for strong tag for campaign price"
+      end
+
+
+      @a = @driver.find_elements(css: "#box-campaigns .content .link")
+      @a.each do |x|
+        @href = x.attribute("href")
+      end
+      @driver.get(@href)
+
+      @campaign_price_inside = @driver.find_element(css: ".information .price-wrapper .campaign-price")
+      @campaign_price_inside_color = @campaign_price_inside.style("color")
+      @campaign_price_inside_tag = @campaign_price_inside.attribute("tagName")
+
+      @campaign_price_inside_color = @campaign_price_inside_color.tr('^0-9', '')
+      @rgba_camp_price_inside = @campaign_price_inside_color.scan(/.{3}/)
+
+      #Checking red color
+      if @rgba_camp_price_inside[0] != @rgba_camp_price_inside[1]
+        puts "Test passed for inside campaign color"
+      else
+        puts "Test failed for inside campaign color"
+      end
+
+      #Checking strong tag
+      if @campaign_price_inside_tag.casecmp 'strong'
+        puts "Test passed for strong tag for inside campaign price"
+      else
+        puts "Test failed for strong tag for inside campaign price"
+      end
+    end
+
+    it "campaign price is larger than regular price" do
+      @campaign_price = @driver.find_element(css: "#box-campaigns .price-wrapper .campaign-price")
+      @campaign_price_tag = @campaign_price.attribute("tagName")
+
+      @reg_price = @driver.find_element(css: "#box-campaigns .price-wrapper .regular-price")
+      @regprice_tag = @reg_price.attribute("tagName")
+
+      @a = @driver.find_elements(css: "#box-campaigns .content .link")
+      @a.each do |x|
+        @href = x.attribute("href")
+      end
+      @driver.get(@href)
+
+      @campaign_price_inside = @driver.find_element(css: ".information .price-wrapper .campaign-price")
+      @campaign_price_inside_tag = @campaign_price_inside.attribute("tagName")
+
+      @regular_price_inside = @driver.find_element(css: ".information .price-wrapper .regular-price")
+      @regular_price_inside_tag = @regular_price_inside.attribute("tagName")
+
+      if (@campaign_price_tag == 'STRONG') && (@regprice_tag != 'STRONG')
+        puts "Test passed. Campaign price is fatter than regular price"
+      else
+        puts "Test failed. Campaign price is not fatter than regular price"
+      end
+
+      if (@campaign_price_inside_tag == 'STRONG') && (@regular_price_inside_tag != 'STRONG')
+        puts "Test passed. Inside campaign price is fatter than regular price "
+      else
+        puts "Test failed. Inside campaign price is not fatter than regular price "
+      end
+  end
+end
