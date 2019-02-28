@@ -1,0 +1,141 @@
+require 'selenium-webdriver'
+require 'rspec'
+require 'active_support'
+require 'active_support/rails'
+require 'faker'
+
+describe 'Registration of user' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @driver.get('http://localhost:8080/litecart/admin')
+    @user_name = @driver.find_element(name: 'username').send_keys('admin')
+    @password = @driver.find_element(name: 'password').send_keys('admin')
+    @driver.find_element(name: 'login').click()
+
+    #Disable CAPTCHA
+    @hrefs = []
+    @main_links = @driver.find_elements(css: "#box-apps-menu a")
+
+    @main_links.each do |link|
+      @hrefs << link.attribute("href")
+    end
+
+    @hrefs.each do |el|
+      if el.include? "settings"
+        @driver.get(el)
+      end
+    end
+
+    @security_link = @driver.find_element(css: ".docs #doc-security")
+    @security_link.click
+
+    @edit = @driver.find_elements(css: ".dataTable tr td a").last
+    @edit.click
+
+    @radio = @driver.find_elements(css: ".dataTable label").last
+    @radio.click
+
+    @save_btn = @driver.find_element(name: "save")
+    @save_btn.click
+    @driver.quit
+  end
+
+  it '- account created succesfully' do
+
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/en/')
+    @link = @driver.find_element(link_text: "New customers click here")
+    @link.click
+
+
+    #Filling tax id
+    @tax_id_field = @driver.find_element(name: "tax_id")
+    @tax_id = [*('0'..'9')].shuffle[0,8].join
+    @tax_id_field.send_keys(@tax_id)
+    @driver.action.send_keys("\ue004").perform
+
+
+    #Filling company name
+    @company_field = @driver.find_element(name: "company")
+    @company = Faker::Company.name
+    @company_field.send_keys(@company)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling first name
+    @first_name_field = @driver.find_element(name: "firstname")
+    @first_name = Faker::Name.name
+    @first_name_field.send_keys(@first_name)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling last name
+    @last_name_field = @driver.find_element(name: "lastname")
+    @last_name = Faker::Name.name
+    @last_name_field.send_keys(@last_name)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling address
+    @address_field = @driver.find_element(name: "address1")
+    @address = Faker::Address.street_address
+    @address_field.send_keys(@address)
+    @driver.action.send_keys("\ue004").perform
+    
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling postcode
+    @postcode_field = @driver.find_element(name: "postcode")
+    @postcode = [*('0'..'9')].shuffle[0,6].join
+    @postcode_field.send_keys(@postcode)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling city
+    @city_field = @driver.find_element(name: "city")
+    @city = Faker::Address.city
+    @city_field.send_keys(@city)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling email
+    @email_field = @driver.find_element(name: "email")
+    @email = Faker::Internet.email
+    @email_field.send_keys(@email)
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling phone number
+    @phone_field = @driver.find_element(name: "phone")
+    @phone = Faker::PhoneNumber.cell_phone
+    @phone_field.send_keys(@phone)
+    @driver.action.send_keys("\ue004").perform
+
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling password
+    @desired_password_field = @driver.find_element(name: "password")
+    @password = [*('a'..'z'),*('0'..'9')].shuffle[0,8].join
+    @desired_password_field.send_keys(@password)
+    @driver.action.send_keys("\ue004").perform
+
+    #Confirming password
+    @confirmed_password_field = @driver.find_element(name: "confirmed_password")
+    @confirmed_password_field.send_keys(@password)
+    @driver.action.send_keys("\ue004").perform
+
+    @create_account_btn = @driver.find_element(name: "create_account")
+    @create_account_btn.click
+
+    #Log out
+    @log_out = @driver.find_element(css: "a[href*='logout']")
+    @log_out.click
+
+    #Second log in
+    @user_name = @driver.find_element(name: "email").send_keys(@email)
+    @user_password = @driver.find_element(name: "password").send_key(@password)
+    @driver.find_element(name: "login").click
+
+    #Log out
+    @log_out = @driver.find_element(css: "a[href*='logout']")
+    @log_out.click
+  end
+end
