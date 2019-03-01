@@ -87,7 +87,7 @@ describe 'Registration of user' do
 
     #Filling postcode
     @postcode_field = @driver.find_element(name: "postcode")
-    @postcode = [*('0'..'9')].shuffle[0,6].join
+    @postcode = [*('0'..'9')].shuffle[0,5].join
     @postcode_field.send_keys(@postcode)
     @driver.action.send_keys("\ue004").perform
 
@@ -95,6 +95,12 @@ describe 'Registration of user' do
     @city_field = @driver.find_element(name: "city")
     @city = Faker::Address.city
     @city_field.send_keys(@city)
+    @driver.action.send_keys("\ue004").perform
+
+    #Choosing country and state
+    @driver.find_element(css: ".select2-selection__arrow").click
+    @driver.find_element(css: "input.select2-search__field").send_keys("United States")
+    @driver.find_element(css: "input.select2-search__field").send_keys("\xEE\x80\x87")
     @driver.action.send_keys("\ue004").perform
 
     #Filling email
@@ -105,7 +111,7 @@ describe 'Registration of user' do
 
     #Filling phone number
     @phone_field = @driver.find_element(name: "phone")
-    @phone = Faker::PhoneNumber.cell_phone
+    @phone = Faker::Number.number(10)
     @phone_field.send_keys(@phone)
     @driver.action.send_keys("\ue004").perform
 
@@ -125,6 +131,17 @@ describe 'Registration of user' do
     @create_account_btn = @driver.find_element(name: "create_account")
     @create_account_btn.click
 
+    #Selecting zone
+    @zone = @driver.find_element(css: "select[name*='zone_code']").click
+
+    #Refilling missing fields
+    @desired_password_field = @driver.find_element(name: "password")
+    @desired_password_field.send_keys(@password)
+    @confirmed_password_field = @driver.find_element(name: "confirmed_password")
+    @confirmed_password_field.send_keys(@password)
+    @create_account_btn = @driver.find_element(name: "create_account")
+    @create_account_btn.click
+
     #Log out
     @log_out = @driver.find_element(css: "a[href*='logout']")
     @log_out.click
@@ -134,7 +151,7 @@ describe 'Registration of user' do
     @user_password = @driver.find_element(name: "password").send_key(@password)
     @driver.find_element(name: "login").click
 
-    #Log out
+    #Second log out
     @log_out = @driver.find_element(css: "a[href*='logout']")
     @log_out.click
   end
