@@ -99,13 +99,10 @@ describe 'Goods' do
     ##########
 
     #Uploading img
-    # @file_name = '123.png'
-    # @file = File.join(Dir.pwd, @filename)
-    #
-    # @upload_img = find_element(name: "new_images[]")
-    # @upload_img.click
-    # @upload_img.send_keys(@file)
-    # @upload_img.click
+    @file_name = '123.png'
+    @file = File.join(Dir.pwd, @file_name)
+    @upload_img = @driver.find_element(name: "new_images[]")
+    @upload_img.send_keys(@file)
     @driver.action.send_keys("\ue004").perform
     @driver.action.send_keys("\ue004").perform
     #######
@@ -178,8 +175,6 @@ describe 'Goods' do
     @option.select_by(:text, 'US Dollars')
     @driver.action.send_keys("\ue004").perform
     @driver.action.send_keys("\ue004").perform
-
-    sleep 7
 
     #Adding price USD
     @reg_price_field = @driver.find_element(name: "prices[USD]")
