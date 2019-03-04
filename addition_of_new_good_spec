@@ -1,0 +1,211 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+require 'faker'
+
+describe 'Goods' do
+
+  before(:each) do
+
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+
+    # Login and password
+    @user_name = @driver.find_element(name: 'username').send_keys('admin')
+    @password = @driver.find_element(name: 'password').send_keys('admin')
+    @driver.find_element(name: 'login').click()
+
+    @driver.manage.timeouts.implicit_wait = 3
+  end
+
+  it 'are added correctly' do
+    @hrefs = []
+    
+    # Checking main left menu links
+    @main_links = @driver.find_elements(css: "#box-apps-menu a")
+    @main_links.each do |link|
+      @hrefs << link.attribute("href")
+    end
+    
+    @hrefs.each do |el|
+      if el.include? "catalog"
+        @driver.get(el)
+      end
+    end
+
+    #Number of products before
+    @before_products = @driver.find_elements(css: "row")
+    @before_products = @before_products.length
+
+    #Adding new product
+    @add_product_btn = @driver.find_element(link_text: "Add New Product")
+    @add_product_btn.click
+
+    #Checking radio-button
+    @radio_btn = @driver.find_element(css: "#tab-general label")
+    @radio_btn.click
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling name
+    @name_good_field = @driver.find_element(name: "name[en]")
+    @name_good_field.click
+    @name_of_good = Faker::Name.name
+    @name_good_field.send_keys(@name_of_good)
+
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling code
+    @code_field = @driver.find_element(name: "code")
+    @code_field.click
+    @code = Faker::Code.npi
+    @code_field.send_keys(@code)
+
+    @driver.action.send_keys("\ue004").perform
+
+    #Filling categories
+    @categories = @driver.find_elements(name: "categories[]")
+    @categories[1].click
+    @categories[2].click
+
+    #Selecting default category
+    @default_category = @driver.find_element(css: "select[name*='default_category_id'] option[value='1']")
+
+    #Selecting gender
+    @product_group_fields = @driver.find_elements(name: "product_groups[]")
+    @product_group_fields[0].click
+
+    #Selecting quantity
+    @quantity_filed = @driver.find_element(name: "quantity")
+    @quantity_filed.click
+    @quantity = Faker::Number.number(8)
+    @quantity_filed.send_keys(@quantity)
+    @driver.action.send_keys("\ue004").perform
+    
+    #Selecting quantity unit
+    @quantity_field = @driver.find_element(css: "select[name*='quantity_unit_id'] option[selected='selected']")
+    @driver.action.send_keys("\ue004").perform
+
+    #Selecting Delivery Status
+    @delivery_status_field = @driver.find_element(css: "select[name*='delivery_status_id'] option[selected='selected']")
+    @driver.action.send_keys("\ue004").perform
+
+    #Selecting sold out status
+    @sold_out_status_field = @driver.find_element(css: "select[name*='sold_out_status_id']")
+    @sold_out_status_field.click
+    @driver.action.send_keys("\ue004").perform
+    ##########
+
+    #Uploading img
+    # @file_name = '123.png'
+    # @file = File.join(Dir.pwd, @filename)
+    #
+    # @upload_img = find_element(name: "new_images[]")
+    # @upload_img.click
+    # @upload_img.send_keys(@file)
+    # @upload_img.click
+    @driver.action.send_keys("\ue004").perform
+    @driver.action.send_keys("\ue004").perform
+    #######
+   
+    #Choosing date valid from
+    @date_field_from = @driver.find_element(name: "date_valid_from")
+    @date_field_from.send_keys("01/01/2019")
+    @driver.action.send_keys("\ue004").perform 
+
+    #Choosing date valid to
+    @date_field_to = @driver.find_element(name: "date_valid_to")
+    @date_field_to.send_keys("12/31/2019")
+    @driver.action.send_keys("\ue004").perform
+
+
+
+    #Switching to tab 'Information'
+    @tabs = @driver.find_element(link_text: "Information")
+    @tabs.click
+
+    #Choosing manufacturer id
+    @manufacturer_id = @driver.find_element(name: "manufacturer_id")
+    @option = Selenium::WebDriver::Support::Select.new(@manufacturer_id)
+    @option.select_by(:text, 'ACME Corp.')
+
+    #Choosing keywords
+    @driver.action.send_keys("\ue004").perform
+    @keywords_field = @driver.find_element(name: "keywords")
+    @keyword = Faker::Superhero.name
+    @keywords_field.send_keys(@keyword)
+    @driver.action.send_keys("\ue004").perform
+
+    #Choosing short description
+    @short_desc_field = @driver.find_element(name: "short_description[en]")
+    @short_description = Faker::Marketing.buzzwords
+    @short_desc_field.send_keys(@short_description)
+    @driver.action.send_keys("\ue004").perform
+
+    #Choosing description
+    @desc_field = @driver.find_element(name: "description[en]")
+    @description = Faker::Marketing.buzzwords
+    @desc_field.send_keys(@description)
+    @driver.action.send_keys("\ue004").perform
+
+    #Choosing head title
+    @head_title_field = @driver.find_element(name: "head_title[en]")
+    @head_title = Faker::Marketing.buzzwords
+    @head_title_field.send_keys(@head_title)
+
+    #Choosing meta description
+    @meta_desc_field = @driver.find_element(name: "meta_description[en]")
+    @meta_description = Faker::Marketing.buzzwords
+    @meta_desc_field.send_keys(@meta_description)
+
+
+    
+    #Switching to Prices tab
+    @prices_tab = @driver.find_element(link_text: "Prices")
+    @prices_tab.click
+
+    #Adding purchase price
+    @price_field = @driver.find_element(name: "purchase_price")
+    @price = Faker::Number.decimal(2)
+    @price_field.send_keys(@price)
+
+    #Choosing currency
+    @driver.action.send_keys("\ue004").perform
+    @currency = @driver.find_element(name: "purchase_price_currency_code")
+    @option = Selenium::WebDriver::Support::Select.new(@currency)
+    @option.select_by(:text, 'US Dollars')
+    @driver.action.send_keys("\ue004").perform
+    @driver.action.send_keys("\ue004").perform
+
+    sleep 7
+
+    #Adding price USD
+    @reg_price_field = @driver.find_element(name: "prices[USD]")
+    @reg_price = Faker::Number.decimal(2)
+    @reg_price_field.send_keys(@reg_price)
+    @driver.action.send_keys("\ue004").perform
+    @driver.action.send_keys("\ue004").perform
+
+    #Adding price EUR
+    @reg_price_field2 = @driver.find_element(name: "prices[EUR]")
+    @reg_price2 = Faker::Number.decimal(2)
+    @reg_price_field2.send_keys(@reg_price2)
+    @driver.action.send_keys("\ue004").perform
+    @driver.action.send_keys("\ue004").perform
+
+    #Saving product
+    @save_btn = @driver.find_element(name: "save")
+    @save_btn.click
+
+    #Checking if product was added
+    @wait.until { @after_products = @driver.find_elements(css: "row") }
+    @after_products = @after_products.length
+    if @after_products > @before_products
+      puts "Product was added correctly"
+    else
+      puts "Product was added incorrectly"
+    end
+  end
+end
