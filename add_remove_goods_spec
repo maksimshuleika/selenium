@@ -1,0 +1,95 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'Goods on main page' do
+
+  before(:each) do
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://litecart.stqa.ru/en/')
+  end
+
+  it 'are added correctly to the cart' do
+    3.times do
+      select_good
+      choose_size if has_size?
+      tr = get_updated_quantity
+      add_good_to_cart
+      waiting_for_cart_update(tr)
+      go_back
+    end
+
+    checkout
+    2.times { wait { remove_item }}
+  end
+
+  private
+
+  def select_good
+    first_product = @driver.find_element(css: "#box-most-popular")
+    links = first_product.find_elements(css: "a")
+    links[0].click
+  end
+
+  def has_size?
+    size = @driver.find_element(css: "#box-product")
+    size.text.include? "Size"
+  end
+
+  def choose_size
+    good_size = @driver.find_element(name: "options\[Size\]")
+    option = Selenium::WebDriver::Support::Select.new(good_size)
+    option.select_by(:text, 'Small')
+  end
+
+  def add_good_to_cart
+    add_cart_btn = @driver.find_element(name: "add_cart_product")
+    add_cart_btn.click
+  end
+
+  def go_back
+    @driver.get('http://litecart.stqa.ru/en/')
+  end
+
+  def get_updated_quantity
+    @driver.find_element(css: "#cart .quantity").attribute("textContent").to_i
+  end
+
+  def waiting_for_cart_update(quantity_start)
+    @wait.until { quantity_start + 1 == get_quantity }
+  end
+
+  def get_quantity
+    @driver.find_element(css: ".quantity").attribute("textContent").to_i
+  end
+
+  def checkout
+    cart = @driver.find_element(css: "#cart")
+    cart_links = cart.find_elements(css: "a")
+    cart_links[2].click
+  end
+
+  def remove_item
+    remove_btn = @driver.find_element(name: "remove_cart_item")
+    @wait.until { remove_btn.displayed? }
+    remove_btn.click
+  end
+
+  def get_orders_in_table
+    yield @driver.find_elements(css: "#order_confirmation-wrapper table tr td.item").length
+  end
+  
+  def waiting_for_table_update(tr_was)
+    @wait.until { get_orders_in_table { |tr_now| tr_was - 1 == tr_now } }
+  end
+
+  def wait
+    get_orders_in_table do |order_count|
+      yield
+      waiting_for_table_update(order_count)
+    end
+  end
+end
