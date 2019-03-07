@@ -1,0 +1,72 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+
+describe 'Links in new window' do
+  
+  before(:each) do
+    # Preparing setup for testing
+    @driver = Selenium::WebDriver.for :chrome
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+  end
+
+  it 'are opened' do
+    login
+    click_countries
+    country_edit
+    process_links(get_links)
+
+  end
+
+  private
+
+  def login
+    @wait.until {user_name = @driver.find_element(name: 'username')}.send_keys('admin')
+    @wait.until {password = @driver.find_element(name: 'password')}.send_keys('admin')
+    @driver.find_element(name: 'login').click()
+  end
+
+  def click_countries
+    hrefs = []
+    main_links = @driver.find_elements(css: "#box-apps-menu a")
+    main_links.each do |link|
+      hrefs << link.attribute("href")
+    end
+
+    hrefs.each do |el|
+      if el.include? "countries"
+        @driver.get(el)
+      end
+    end
+  end
+
+  def country_edit
+    edit_country = @driver.find_element(css: ".row > td > a")
+    edit_country.click
+  end
+
+  def get_links
+    @links_to_process = []
+    links = @driver.find_elements(css: "#content a")
+    links.each do |link|
+      if link.attribute("target") == "_blank"
+        @links_to_process << link.attribute("href")
+      end
+    end
+    @links_to_process
+  end
+
+  def process_links(links_for_process)
+    count = 0
+    links = links_for_process
+    links.each do |el|
+      @driver.execute_script( "window.open()" )
+      @driver.switch_to.window( @driver.window_handles.last )
+      @driver.get(el)
+      @driver.execute_script( "window.close()" )
+      @driver.switch_to.window( @driver.window_handles.first )
+    end
+  end
+end
