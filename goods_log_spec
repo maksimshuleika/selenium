@@ -1,0 +1,81 @@
+require 'rspec'
+require 'selenium-webdriver'
+require 'active_support'
+require 'active_support/rails'
+require 'logger'
+
+describe 'Goods' do
+
+  before(:each) do
+    @driver = Selenium::WebDriver.for(:chrome)
+
+    # Saving log to file
+    Selenium::WebDriver.logger.output = 'selenium.log'
+
+    #Preparing setup for testing
+    @wait = Selenium::WebDriver::Wait.new(timeout: 10)
+    @driver.get('http://localhost:8080/litecart/admin')
+  end
+
+  it 'do not have errors in log' do
+    login
+    click_catalog
+    click_subcatalog
+    get_goods_links
+    click_links_check_logs
+    check_log_messages
+  end
+
+  private
+
+  def login
+    @wait.until {user_name = @driver.find_element(name: 'username')}.send_keys('admin')
+    @wait.until {password = @driver.find_element(name: 'password')}.send_keys('admin')
+    @driver.find_element(name: 'login').click()
+  end
+
+  def click_catalog
+    catalog = @driver.find_elements(css: "#app- a")
+    catalog[1].click
+  end
+
+  def click_subcatalog
+    @driver.find_element(css: "#doc-catalog a").click
+  end
+
+  def get_goods_links
+    @goods_links = []
+    @rows = @driver.find_elements(css: ".dataTable .row a")
+    @rows.each do |el|
+      if el.attribute("title").include? "Edit"
+        @goods_links << el.attribute("href")
+      end
+    end
+  end
+
+  def click_links_check_logs
+    @goods_links.each do |el|
+      @driver.execute_script( "window.open()" )
+      @driver.switch_to.window( @driver.window_handles.last )
+      @driver.get(el)
+      @wait.until { @driver.execute_script("return document.readyState") == "complete" }
+      expect(@driver.manage.logs.get('browser').any?).to eq(false)
+      @driver.close()
+      @driver.switch_to.window( @driver.window_handles.first )
+      expect(@driver.manage.logs.get('browser').any?).to eq(false)
+    end
+  end
+
+  def check_log_messages
+    @driver.manage.logs.get("browser").each do |l|
+      if l.include? "ERROR"
+        puts "Browser log has error: #{l}"
+      elsif
+        l.include? "WARN"
+        puts "Browser log has warn: #{l}"
+      else
+        puts "Everything is ok"
+      end
+    end
+  end
+end
